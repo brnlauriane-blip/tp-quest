@@ -1,11 +1,6 @@
-name: ajc/quest
+name: quest
 
-# Décrire tous les services, volumes, network, etc. nécessaire au bon fonctionnement
-
-# Descrription des différents containers
 services:
-  # Description du container "mysql"
-  # docker run -d -e MYSQL_ROOT_PASSWORD=root --name quest-mysql --network quest -v "D:/ajc/quest-init.sql":/docker-entrypoint-initdb.d/init.sql mysql:8.0.45
   mysql:
     image: mysql:8.0.45
     container_name: quest-mysql
@@ -14,14 +9,11 @@ services:
       MYSQL_ROOT_PASSWORD: root
 
     volumes:
-      # Pour initialiser la base
       - ./quest-init.sql:/docker-entrypoint-initdb.d/init.sql
-
-      # Pour persister les données après suppression / mise à jour du container
       - mysql_data:/var/lib/mysql
 
     networks:
-      - ajc-quest
+      - quest
 
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
@@ -31,10 +23,10 @@ services:
 
   java:
     image: ajc/quest-boot
-    container_name: quest-boot-j
+    container_name: quest-boot
 
     networks:
-      - ajc-quest
+      - quest
 
     ports:
       - 8080:8080
@@ -42,21 +34,18 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://quest-mysql:3306/projet_quest
       SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
 
     depends_on:
-      # On va attendre que mysql démarre ET qu'il soit prêt à être utilisé
       mysql:
         condition: service_healthy
 
   angular:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ajc/quest-angular
-    container_name: quest-angular-j
+    container_name: quest-angular
 
     networks:
-      - ajc-quest
+      - quest
 
     ports:
       - 80:80
@@ -65,10 +54,9 @@ services:
       - java
 
 networks:
-  ajc-quest:
-    name: ajc-quest
+  quest:
+    name: quest
 
 volumes:
   mysql_data:
     name: quest-mysql-data
-    
